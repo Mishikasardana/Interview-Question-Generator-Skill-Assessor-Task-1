@@ -1,0 +1,91 @@
+# Deterministic scoring configuration for the Recruiter Match Score.
+#
+# See the approved plan ("One Recruiter Match Score — Simplification &
+# Consolidation Plan", section 6) for the full rationale. Every numeric
+# value below is a PLACEHOLDER carried over as-is from the code it replaces
+# — none has been validated against an independent, recruiter-labeled
+# benchmark yet. `calibrated: false` reflects that honestly. Do not treat
+# any value here as a recommendation; treat it as "what the code already
+# assumed, now visible and easy to change" until the calibration loop
+# (plan section 8) produces evidence-backed numbers and this flips to true.
+#
+# This file is human-reviewed and PR-gated, same governance as
+# data/skill_ontology.yaml — nothing here is auto-tuned at inference time.
+
+version: "1.0.0"
+calibrated: false
+
+# Base weight by whether the JD itself classified a requirement as required
+# or preferred. This is the ONLY per-requirement importance signal kept —
+# see plan section 3.1 for why the previous role/category weight table and
+# the fine-grained LLM "weight_hint" were both removed rather than kept.
+required_base_weight: 1.0
+preferred_base_weight: 0.35
+
+# A requirement scoring at or below this value is treated as "genuinely
+# missing" — no usable evidence was found for it. Only missing requirements
+# get the difficulty penalty below; a requirement with any real evidence is
+# never penalized for being merely "hard."
+missing_score_threshold: 20
+
+# Applied to a missing requirement's weight only — a bigger gap for a
+# harder-to-learn skill. difficulty_tier itself comes from the Requirement
+# Understanding step (plan section 1), informed by the skill config's
+# base_difficulty attribute and adjusted for role context.
+difficulty_penalty_multiplier:
+  easy: 0.5
+  medium: 1.0
+  hard: 1.3
+  specialized: 1.6
+
+# If the deterministic hard-requirement gate fails (a disqualifying, verified
+# miss — e.g. a stated minimum-years requirement the resume clearly doesn't
+# meet), the final score is capped here regardless of how well other
+# requirements scored.
+hard_gate_fail_score_cap: 30
+
+# Direct (is_required, difficulty_tier) -> tier lookup for grouping missing
+# requirements in the explanation (plan section 3.2) — replaces the old
+# continuous final_weight threshold comparison, since final_weight now only
+# takes a handful of discrete values.
+#
+# A missing REQUIRED skill is always "critical", regardless of difficulty —
+# "required" is the JD's own signal that this is a must-have, and a
+# recruiter would flag it as critical whether or not it happens to be easy
+# to pick up. (An earlier version of this table gated "critical" on
+# difficulty_tier being hard/specialized; since the Requirement Understanding
+# step defaults most skills to "medium" difficulty, that version left
+# critical_missing_skills empty in most real cases even when a required
+# skill was genuinely missing — a real bug caught during live testing, not
+# a calibration nuance.) Difficulty still differentiates PREFERRED gaps,
+# where "how hard to pick up if missing" is a reasonable way to decide
+# whether a gap is worth mentioning at all (minor) or barely worth
+# mentioning (nice_to_have) — preferred gaps were never must-haves in the
+# first place, so there's no "critical" tier for them.
+missing_skill_tier_rules:
+  required:
+    easy: critical
+    medium: critical
+    hard: critical
+    specialized: critical
+  preferred:
+    easy: nice_to_have
+    medium: nice_to_have
+    hard: minor
+    specialized: minor
+
+# Confidence answers "how sure is the system this score is right" (plan
+# section 3.3), computed from a small set of red flags. This is the one
+# numeric threshold in that calculation: the minimum share of non-missing
+# requirements that must have direct/verified evidence to avoid the
+# "evidence completeness" flag.
+confidence_flag_thresholds:
+  evidence_completeness_min_share: 0.7
+
+# Score cutoffs mapping the final score into a recommendation label (plan
+# section 3.4). Band count/labels are a UX default; the cutoff VALUES below
+# are calibration-required, same as everything else in this file.
+recommendation_score_cutoffs:
+  strong_hire: 80
+  consider: 60
+  weak_match: 40

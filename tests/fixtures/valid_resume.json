@@ -1,0 +1,12 @@
+{
+  "name": "Jane Doe",
+  "email": "jane@example.com",
+  "phone": "",
+  "linkedin": "",
+  "github": "",
+  "skills": ["Python", "Docker"],
+  "education": [],
+  "experience": [],
+  "projects": [],
+  "certifications": []
+}

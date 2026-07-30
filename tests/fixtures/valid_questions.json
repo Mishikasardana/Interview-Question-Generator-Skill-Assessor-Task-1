@@ -1,0 +1,10 @@
+{
+  "questions": [
+    {
+      "question": "How would you apply Python to this backend role?",
+      "category": "Technical",
+      "difficulty": "medium",
+      "reason": "Python is present in the candidate profile and JD."
+    }
+  ]
+}

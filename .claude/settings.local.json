@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(brew list *)",
+      "Bash(brew services *)",
+      "Bash(psql postgres *)",
+      "Bash(PGPASSWORD='6ff286da9efa901896c9484a725803bc' psql -h localhost -U interview_platform_user -d interview_platform -c \"SELECT current_user, current_database\\(\\);\")",
+      "Bash(.venv/bin/python -m database.init_db)",
+      "Bash(PGPASSWORD='6ff286da9efa901896c9484a725803bc' psql -h localhost -U interview_platform_user -d interview_platform -c \"\\\\dt\")",
+      "Bash(pkill -f \"streamlit run app.py\")",
+      "Bash(.venv/bin/streamlit run *)",
+      "Bash(disown)",
+      "Bash(PGPASSWORD='6ff286da9efa901896c9484a725803bc' psql -h localhost -U interview_platform_user -d interview_platform -c \"SELECT id, name, email, role, created_at FROM users;\")",
+      "Bash(.venv/bin/python -m pytest -m \"not integration\" -q)",
+      "Bash(.venv/bin/python -m py_compile app.py)",
+      "Bash(git add *)",
+      "Bash(git commit -q -m ' *)",
+      "Bash(createdb -O interview_platform_user interview_platform_test)",
+      "Bash(TEST_DATABASE_URL=\"postgresql+psycopg://interview_platform_user:6ff286da9efa901896c9484a725803bc@localhost:5432/interview_platform_test\" .venv/bin/python -m pytest -m integration -q)",
+      "Bash(.venv/bin/python -m py_compile app.py database/repositories.py)",
+      "Bash(.venv/bin/python -m pytest -q)",
+      "Bash(.venv/bin/python -m pytest tests/e2e/test_streamlit_flows.py -k \"match_card\" -q)",
+      "Bash(.venv/bin/python -m pytest tests/e2e/test_streamlit_flows.py -k \"heading or h1\" -q)",
+      "Bash(.venv/bin/python -c ' *)",
+      "Bash(.venv/bin/python -m pytest tests/e2e/test_streamlit_flows.py -k \"primary_styled\" -q)",
+      "Bash(grep -rn \"GLM_API_KEY\" \"/Users/namansehwag/Downloads/iip 3\" --include=\"*.py\" --include=\"*.env*\" --include=\"*.txt\" --include=\"*.json\" --include=\"*.yml\" --include=\"*.yaml\" -not -path \"*/.venv/*\")",
+      "Bash(curl -s -X POST https://open.bigmodel.cn/api/paas/v4/chat/completions -H 'Authorization: Bearer 136df3b6f39542a280253977a6b5b9ca.GE76bdLW01JoLoaS' -H 'Content-Type: application/json' -d '{\"model\":\"glm-4-flash\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}')",
+      "Bash(python3 -c ' *)"
+    ]
+  }
+}

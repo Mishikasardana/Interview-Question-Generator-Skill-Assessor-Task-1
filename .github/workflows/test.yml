@@ -1,0 +1,99 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Run unit and e2e tests
+        run: |
+          pytest -m "not integration" --cov=. --cov-report=term-missing --cov-fail-under=60
+
+  integration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: interview_platform_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Run integration tests
+        env:
+          TEST_DATABASE_URL: postgresql+psycopg://postgres:test@localhost:5432/interview_platform_test
+        run: pytest -m integration
+
+  # Recruiter Match Score regression gate (see tests/benchmark/README.md and
+  # the approved "One Recruiter Match Score" plan, section 8.6). Deliberately
+  # manual-only (workflow_dispatch), not triggered on every push/PR: it makes
+  # real, costly GLM API calls across the benchmark dataset, and requires a
+  # GLM_API_KEY repo secret to be configured. Run it on demand before merging
+  # a change to recruiter_intelligence/aggregation.py, recruiter_intelligence/prompts/,
+  # recruiter_intelligence/config/scoring_config.yaml, or
+  # recruiter_intelligence/data/skill_ontology.yaml.
+  recruiter-match-regression:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Run benchmark against the live recruiter_intelligence pipeline
+        env:
+          GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+        run: |
+          python -m tests.benchmark.runner --skip-semantic
+          python -m tests.benchmark.analyze
+
+      - name: Check for a regression against the committed baseline
+        run: python -m tests.benchmark.check_regression
+
+      - name: Upload benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: recruiter-match-benchmark-results
+          path: tests/benchmark/output/

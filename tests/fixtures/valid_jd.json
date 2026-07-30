@@ -1,0 +1,8 @@
+{
+  "role": "Backend Engineer",
+  "required_skills": ["Python", "SQL"],
+  "preferred_skills": ["Docker"],
+  "responsibilities": ["Build REST APIs"],
+  "experience_level": "2-4 years",
+  "education_requirement": "Bachelor's degree"
+}
