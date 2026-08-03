@@ -1,0 +1,9 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "interview_skill_assessor"
+version = "0.0.0"
+description = "Interview Intelligence Platform API"
+dependencies = []
