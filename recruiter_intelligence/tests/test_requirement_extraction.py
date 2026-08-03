@@ -82,7 +82,7 @@ def test_build_requirement_extraction_prompt_rejects_non_parsed_jd():
 
 @patch("recruiter_intelligence.requirement_extraction.httpx.post")
 @patch("recruiter_intelligence.requirement_extraction.get_glm_api_key", return_value="key")
-@patch("recruiter_intelligence.requirement_extraction.get_glm_model", return_value="glm-4.5-flash")
+@patch("recruiter_intelligence.requirement_extraction.get_recruiter_glm_model", return_value="glm-4.5-flash")
 @patch("recruiter_intelligence.requirement_extraction.get_glm_api_url", return_value="https://example/api")
 def test_extract_requirements_text_success(_url, _model, _key, mock_post):
     mock_post.return_value = _mock_response(_VALID_LLM_JSON)
@@ -96,7 +96,7 @@ def test_extract_requirements_text_success(_url, _model, _key, mock_post):
 
 @patch("recruiter_intelligence.requirement_extraction.httpx.post")
 @patch("recruiter_intelligence.requirement_extraction.get_glm_api_key", return_value="key")
-@patch("recruiter_intelligence.requirement_extraction.get_glm_model", return_value="glm-4.5-flash")
+@patch("recruiter_intelligence.requirement_extraction.get_recruiter_glm_model", return_value="glm-4.5-flash")
 @patch("recruiter_intelligence.requirement_extraction.get_glm_api_url", return_value="https://example/api")
 def test_extract_requirements_text_raises_on_http_error(_url, _model, _key, mock_post):
     request = httpx.Request("POST", "https://example/api")
@@ -109,7 +109,7 @@ def test_extract_requirements_text_raises_on_http_error(_url, _model, _key, mock
 
 @patch("recruiter_intelligence.requirement_extraction.httpx.post")
 @patch("recruiter_intelligence.requirement_extraction.get_glm_api_key", return_value="key")
-@patch("recruiter_intelligence.requirement_extraction.get_glm_model", return_value="glm-4.5-flash")
+@patch("recruiter_intelligence.requirement_extraction.get_recruiter_glm_model", return_value="glm-4.5-flash")
 @patch("recruiter_intelligence.requirement_extraction.get_glm_api_url", return_value="https://example/api")
 def test_extract_requirements_text_strict_mode_appends_instruction(_url, _model, _key, mock_post):
     mock_post.return_value = _mock_response(_VALID_LLM_JSON)
@@ -239,7 +239,7 @@ def test_resolve_requirements_populates_ontology_base_difficulty():
 
 @patch("recruiter_intelligence.requirement_extraction.httpx.post")
 @patch("recruiter_intelligence.requirement_extraction.get_glm_api_key", return_value="key")
-@patch("recruiter_intelligence.requirement_extraction.get_glm_model", return_value="glm-4.5-flash")
+@patch("recruiter_intelligence.requirement_extraction.get_recruiter_glm_model", return_value="glm-4.5-flash")
 @patch("recruiter_intelligence.requirement_extraction.get_glm_api_url", return_value="https://example/api")
 def test_extract_requirements_end_to_end(_url, _model, _key, mock_post):
     mock_post.return_value = _mock_response(_VALID_LLM_JSON)

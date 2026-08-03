@@ -95,7 +95,7 @@ def parse_and_validate_resume(cleaned_text: str) -> ParsedResume:
     last_error: ValidationError | None = None
 
     for attempt in range(1, _MAX_PARSE_ATTEMPTS + 1):
-        raw_json = parse_resume_text(cleaned_text)
+        raw_json = parse_resume_text(cleaned_text, strict=attempt > 1)
         try:
             return validate_resume_json(raw_json)
         except ValidationError as exc:

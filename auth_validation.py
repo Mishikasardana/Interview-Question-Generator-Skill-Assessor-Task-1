@@ -13,7 +13,14 @@ import re
 _EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 _PHONE_RE = re.compile(r"^\+?[0-9][0-9 \-()]{6,19}$")
 _MIN_PASSWORD_LENGTH = 8
-_MAX_PASSWORD_LENGTH = 128
+# bcrypt ignores everything past the first 72 bytes of a password, so this
+# cap must match that exactly. Anything higher is not a "friendly limit" —
+# it silently makes the tail of a long password meaningless, letting a
+# different password that shares the first 72 bytes authenticate against
+# the same hash. Measured in UTF-8 bytes, not characters, because bcrypt's
+# limit is a byte limit (a 72-character password of non-ASCII characters is
+# well over 72 bytes).
+_MAX_PASSWORD_BYTES = 72
 
 
 def is_valid_phone(phone: str) -> bool:
@@ -42,15 +49,15 @@ def validate_password_strength(password: str) -> list[str]:
 
     Rules: at least 8 characters, at least one uppercase letter, one
     lowercase letter, one digit, and one special (non-alphanumeric)
-    character. Also flags passwords over 128 characters as a friendly
-    error rather than silently relying on hash_password's 72-byte
-    bcrypt truncation.
+    character. Also rejects passwords longer than bcrypt's 72-byte input
+    limit, so a too-long password is a clear error at signup rather than
+    being silently truncated by hash_password.
     """
     violations = []
     if len(password) < _MIN_PASSWORD_LENGTH:
         violations.append(f"At least {_MIN_PASSWORD_LENGTH} characters")
-    if len(password) > _MAX_PASSWORD_LENGTH:
-        violations.append(f"No more than {_MAX_PASSWORD_LENGTH} characters")
+    if len(password.encode("utf-8")) > _MAX_PASSWORD_BYTES:
+        violations.append(f"No more than {_MAX_PASSWORD_BYTES} characters")
     if not re.search(r"[a-z]", password):
         violations.append("At least one lowercase letter")
     if not re.search(r"[A-Z]", password):

@@ -8,6 +8,26 @@ on:
 jobs:
   unit:
     runs-on: ubuntu-latest
+    # The Streamlit auth E2E tests (signup / login / reset / verify) drive
+    # app.py's real repository calls against DATABASE_URL — there's no mock
+    # in between. Without this service they're skipped (see
+    # tests/e2e/conftest.py), which would silently drop auth coverage from
+    # the one job that runs on every push.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: interview_platform
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v4
 
@@ -21,6 +41,8 @@ jobs:
           pip install -r requirements-dev.txt
 
       - name: Run unit and e2e tests
+        env:
+          DATABASE_URL: postgresql+psycopg://postgres:test@localhost:5432/interview_platform
         run: |
           pytest -m "not integration" --cov=. --cov-report=term-missing --cov-fail-under=60
 

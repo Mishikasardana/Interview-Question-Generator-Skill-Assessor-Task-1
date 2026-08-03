@@ -33,8 +33,19 @@ def test_validate_password_strength_flags_too_short():
 
 
 def test_validate_password_strength_flags_too_long():
-    violations = validate_password_strength("Aa1!" * 40)
-    assert any("128 characters" in v for v in violations)
+    violations = validate_password_strength("Aa1!" * 40)  # 160 bytes
+    assert any("72 characters" in v for v in violations)
+
+
+def test_validate_password_strength_allows_exactly_the_bcrypt_limit():
+    assert validate_password_strength("Aa1!" * 18) == []  # exactly 72 bytes
+
+
+def test_validate_password_strength_measures_bytes_not_characters():
+    # 40 non-ASCII characters is only 40 *characters* but 120 UTF-8 bytes,
+    # which bcrypt would truncate — so it has to be rejected.
+    violations = validate_password_strength("Aa1!" + "é" * 40)
+    assert any("72 characters" in v for v in violations)
 
 
 def test_validate_password_strength_flags_missing_lowercase():

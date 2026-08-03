@@ -63,10 +63,14 @@ def test_home_page_renders_portal_buttons():
     assert "Start as Student" in labels
 
 
-def test_start_as_student_navigates_to_auth_gate():
-    # No .streamlit/secrets.toml exists in the test environment, so Google
-    # sign-in is (correctly) reported as not configured — this is the same
-    # degraded state a fresh clone shows before OAuth credentials are set up.
+def test_start_as_student_navigates_to_auth_gate(monkeypatch: pytest.MonkeyPatch):
+    # Asserts the degraded state a fresh clone shows before OAuth
+    # credentials are set up. st.user is forced empty rather than relying on
+    # ".streamlit/secrets.toml doesn't exist here" — that file is gitignored
+    # but present on any machine where Google sign-in was actually
+    # configured, which would otherwise fail this test locally only.
+    monkeypatch.setattr("app.st.user", {})
+
     at = _app()
     at.run()
     at.button(key="start_student").click().run()
@@ -77,7 +81,9 @@ def test_start_as_student_navigates_to_auth_gate():
     assert any("Google sign-in isn't configured" in text for text in infos)
 
 
-def test_protected_interview_page_shows_auth_without_login():
+def test_protected_interview_page_shows_auth_without_login(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr("app.st.user", {})
+
     at = _app()
     at.session_state["page"] = "interview"
     at.run()
@@ -768,12 +774,20 @@ def test_auth_page_warns_when_database_not_configured(monkeypatch: pytest.Monkey
 
 
 def _fill_signup_form(at: AppTest, *, email: str, password: str = "StrongPass1!", confirm: str | None = None) -> None:
+    # Every field the signup form requires must be filled here, including
+    # Phone Number and the Terms checkbox — _handle_signup_submit rejects
+    # the whole form before any per-field check (password match, strength,
+    # ...) if any required field is blank, so a helper that skips one makes
+    # every test below assert against the wrong error.
     _set_text_input_by_label(at, "Full Name", "Test User")
     _set_text_input_by_label(at, "Email", email)
+    _set_text_input_by_label(at, "Phone Number", "+1 555 123 4567")
     _set_text_input_by_label(at, "Password", password)
     _set_text_input_by_label(at, "Confirm Password", confirm if confirm is not None else password)
+    at.checkbox(key="signup_terms").set_value(True)
 
 
+@pytest.mark.needs_db
 def test_email_signup_creates_account_and_logs_in():
     at = _app()
     at.session_state["page"] = "student"
@@ -796,6 +810,7 @@ def test_email_signup_creates_account_and_logs_in():
     assert "verify_token=" in at.session_state["dev_email_preview"]["link"]
 
 
+@pytest.mark.needs_db
 def test_email_signup_rejects_duplicate_email():
     email = f"dup-{uuid.uuid4().hex[:8]}@example.com"
 
@@ -872,6 +887,7 @@ def _create_email_account(*, role: str = "student", password: str = "StrongPass1
     return email
 
 
+@pytest.mark.needs_db
 def test_email_login_succeeds_with_correct_credentials():
     email = _create_email_account(role="student")
 
@@ -889,6 +905,7 @@ def test_email_login_succeeds_with_correct_credentials():
     assert at.session_state["auth_user"]["email"] == email
 
 
+@pytest.mark.needs_db
 def test_email_login_rejects_wrong_password():
     email = _create_email_account(role="student")
 
@@ -906,6 +923,7 @@ def test_email_login_rejects_wrong_password():
     assert any("Invalid email or password" in text for text in errors)
 
 
+@pytest.mark.needs_db
 def test_email_login_rejects_unknown_email():
     at = _app()
     at.session_state["page"] = "student"
@@ -921,6 +939,7 @@ def test_email_login_rejects_unknown_email():
     assert any("Invalid email or password" in text for text in errors)
 
 
+@pytest.mark.needs_db
 def test_email_login_shows_role_mismatch_warning():
     email = _create_email_account(role="student")
 
@@ -938,6 +957,7 @@ def test_email_login_shows_role_mismatch_warning():
     assert any("registered as a student" in text for text in errors)
 
 
+@pytest.mark.needs_db
 def test_email_login_locks_out_after_repeated_failures():
     import rate_limiter
 
@@ -966,6 +986,7 @@ def test_email_login_locks_out_after_repeated_failures():
     rate_limiter._login_attempts.pop(email, None)
 
 
+@pytest.mark.needs_db
 def test_signup_against_existing_google_only_account_is_rejected():
     # Security guardrail: the public signup form must never be usable to
     # attach a password to somebody else's existing Google-linked account.
@@ -990,6 +1011,7 @@ def test_signup_against_existing_google_only_account_is_rejected():
     assert any("already exists" in text for text in errors)
 
 
+@pytest.mark.needs_db
 def test_forgot_password_flow_creates_usable_reset_link():
     email = _create_email_account(role="student")
 
@@ -1010,6 +1032,7 @@ def test_forgot_password_flow_creates_usable_reset_link():
     assert codes and "reset_token=" in codes[0]
 
 
+@pytest.mark.needs_db
 def test_forgot_password_never_issues_a_token_for_google_only_account():
     from database import repositories as db_repo
 
@@ -1033,6 +1056,7 @@ def test_forgot_password_never_issues_a_token_for_google_only_account():
     assert not list(at.code)
 
 
+@pytest.mark.needs_db
 def test_reset_password_link_lets_user_set_a_new_password_and_log_in():
     from database import repositories as db_repo
 
@@ -1068,6 +1092,7 @@ def test_reset_password_link_lets_user_set_a_new_password_and_log_in():
     assert at2.session_state["auth_user"] is not None
 
 
+@pytest.mark.needs_db
 def test_reset_password_rejects_invalid_or_expired_token():
     at = _app()
     at.query_params["reset_token"] = "not-a-real-token"
@@ -1078,6 +1103,7 @@ def test_reset_password_rejects_invalid_or_expired_token():
     assert any("invalid or has expired" in text for text in errors)
 
 
+@pytest.mark.needs_db
 def test_verify_email_link_marks_account_verified():
     # The dev-stub verification link is created at signup time (not on a
     # later login), so capture it right there rather than via the shared
@@ -1151,6 +1177,7 @@ def test_settings_set_password_hidden_when_already_has_password():
     assert not any("Set Password" == b.label for b in at.button)
 
 
+@pytest.mark.needs_db
 def test_settings_set_password_succeeds_for_google_only_account():
     from database import repositories as db_repo
 

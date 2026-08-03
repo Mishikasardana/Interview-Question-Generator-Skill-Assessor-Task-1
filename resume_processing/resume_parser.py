@@ -34,10 +34,12 @@ import httpx
 
 from resume_processing.config import get_glm_api_key, get_glm_api_url, get_glm_model
 from resume_processing.exceptions import ResumeParsingError
+from glm_http import post_with_retry
 
 _PROMPT_PATH = Path(__file__).parent / "prompts" / "resume_parser_prompt.txt"
-_REQUEST_TIMEOUT_SECONDS = 120.0
+_REQUEST_TIMEOUT_SECONDS = 30.0
 _DEFAULT_TEMPERATURE = 0.1
+_MAX_OUTPUT_TOKENS = 2048
 
 _MARKDOWN_FENCE_PATTERN = re.compile(
     r"^```(?:json)?\s*\n?(.*?)\n?```\s*$",
@@ -72,12 +74,14 @@ def strip_markdown_fences(text: str) -> str:
     return stripped
 
 
-def parse_resume_text(cleaned_text: str) -> str:
+def parse_resume_text(cleaned_text: str, *, strict: bool = False) -> str:
     """
     Parse cleaned resume text into structured JSON using the GLM API.
 
     Args:
         cleaned_text: Whitespace-normalized resume text.
+        strict: When ``True``, appends an extra instruction reinforcing that
+            only raw JSON must be returned. Used on retry attempts.
 
     Returns:
         Raw JSON string from the LLM (may still need schema validation).
@@ -95,6 +99,12 @@ def parse_resume_text(cleaned_text: str) -> str:
         raise ResumeParsingError("Cannot parse empty resume text.")
 
     system_prompt = _load_system_prompt()
+    if strict:
+        system_prompt += (
+            "\n\nIMPORTANT: Return ONLY valid JSON. "
+            "Do not include markdown, explanations, comments, or code fences."
+        )
+
     payload = {
         "model": get_glm_model(),
         "messages": [
@@ -102,6 +112,7 @@ def parse_resume_text(cleaned_text: str) -> str:
             {"role": "user", "content": cleaned_text},
         ],
         "temperature": _DEFAULT_TEMPERATURE,
+        "max_tokens": _MAX_OUTPUT_TOKENS,
     }
     headers = {
         "Authorization": f"Bearer {get_glm_api_key()}",
@@ -109,13 +120,12 @@ def parse_resume_text(cleaned_text: str) -> str:
     }
 
     try:
-        response = httpx.post(
+        response = post_with_retry(
             get_glm_api_url(),
             headers=headers,
             json=payload,
             timeout=_REQUEST_TIMEOUT_SECONDS,
         )
-        response.raise_for_status()
     except httpx.HTTPStatusError as exc:
         raise ResumeParsingError(
             f"GLM API returned HTTP {exc.response.status_code}: "
