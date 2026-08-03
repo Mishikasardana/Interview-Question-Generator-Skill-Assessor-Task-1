@@ -2,6 +2,15 @@
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path as _Path
+
+# Ensure the repository root is on sys.path so "import api" resolves in CI and
+# other environments where the checkout root isn't automatically on Python's
+# import path. This mirrors setting PYTHONPATH in CI but keeps tests runnable
+# locally without extra env configuration.
+sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
+
 import json
 from pathlib import Path
 
