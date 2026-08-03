@@ -1,0 +1,17 @@
+.DS_Store
+.env
+.streamlit/secrets.toml
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.venv/
+venv/
+*.pdf
+tests/benchmark/output/

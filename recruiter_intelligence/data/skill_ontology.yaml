@@ -1,0 +1,231 @@
+# Skill Knowledge Graph / Ontology — Recruiter Intelligence Engine
+#
+# Deterministic skill-relationship data consulted BEFORE the LLM reasons in
+# Stage C of the matching pipeline. See the approved plan (§3a.1, Skill
+# Knowledge Graph / Skill Ontology) for the full design rationale.
+#
+# This is a versioned, human-reviewed, PR-gated file, not something the LLM
+# writes to at inference time. Grow it deliberately:
+#   - `synonyms` was seeded verbatim from matching_engine.SKILL_ALIASES —
+#     extend it here going forward, not in matching_engine, so the two
+#     matchers never disagree on what's simply the same thing spelled
+#     differently.
+#   - `categories` group technologies that are roughly interchangeable
+#     ("same category" = 80-95% equivalent-technology credit in Stage C).
+#   - `transferable_edges` connect categories that are related but not
+#     interchangeable ("adjacent category" = 60-80%/40-60% credit).
+#   - `base_difficulty` / `decay_rate` are calibration-tunable starting
+#     points (§3a.2, §3a.4 of the plan), not fixed forever.
+#
+# Coverage is intentionally an initial, curated set (common stacks), not
+# exhaustive — see recruiter_intelligence/skill_ontology.py's
+# unmatched-pair logging for how this is meant to grow from real usage.
+
+version: "1.0.0"
+
+# ---------------------------------------------------------------------------
+# Exact synonyms — same technology, different spelling/casing/abbreviation.
+# A hit here is a 100% match band, same as an exact string match.
+# Seeded verbatim from matching_engine.SKILL_ALIASES (43 entries).
+# ---------------------------------------------------------------------------
+synonyms:
+  # Languages
+  py: python
+  js: javascript
+  ts: typescript
+  "c#": csharp
+  "c++": cpp
+  # Frontend
+  react.js: react
+  reactjs: react
+  next.js: nextjs
+  vue.js: vue
+  vuejs: vue
+  express.js: express
+  expressjs: express
+  node.js: node
+  nodejs: node
+  # AI / ML
+  ml: machine learning
+  dl: deep learning
+  cv: computer vision
+  nlp: natural language processing
+  llm: large language models
+  llms: large language models
+  genai: generative ai
+  gen ai: generative ai
+  rag: retrieval augmented generation
+  hf: huggingface
+  sklearn: scikit-learn
+  scikit learn: scikit-learn
+  tf: tensorflow
+  keras: tensorflow
+  # Databases
+  pg: postgresql
+  postgres: postgresql
+  mongo: mongodb
+  mongo db: mongodb
+  # Cloud
+  aws: amazon web services
+  gcp: google cloud platform
+  azure: microsoft azure
+  # APIs / architecture
+  rest: rest api
+  restapi: rest api
+  rest apis: rest api
+  graphql api: graphql
+  # DevOps
+  k8s: kubernetes
+  ci/cd: cicd
+  ci cd: cicd
+  # Misc
+  oop: object oriented programming
+  dsa: data structures and algorithms
+  os: operating systems
+
+# ---------------------------------------------------------------------------
+# Categories — members are treated as siblings (80-95% equivalent-technology
+# credit) of one another within the same category.
+# ---------------------------------------------------------------------------
+categories:
+  backend_frameworks:
+    label: "Backend Frameworks"
+    base_difficulty: medium
+    decay_rate: moderate
+    members: [fastapi, flask, django, express, "spring boot", spring, rails,
+              "ruby on rails", laravel, "asp.net", "asp.net core"]
+
+  frontend_frameworks:
+    label: "Frontend Frameworks"
+    base_difficulty: medium
+    decay_rate: fast
+    members: [react, vue, angular, svelte, nextjs, nuxt, "nuxt.js"]
+
+  cloud_platforms:
+    label: "Cloud Platforms"
+    base_difficulty: medium
+    decay_rate: moderate
+    members: ["amazon web services", "microsoft azure", "google cloud platform",
+              "digitalocean", "oracle cloud", "ibm cloud"]
+
+  relational_databases:
+    label: "Relational Databases"
+    base_difficulty: easy
+    decay_rate: slow
+    members: [postgresql, mysql, "sql server", mariadb, "oracle db", sqlite]
+
+  nosql_databases:
+    label: "NoSQL Databases"
+    base_difficulty: medium
+    decay_rate: moderate
+    members: [mongodb, cassandra, dynamodb, couchbase, firestore]
+
+  llm_providers:
+    label: "LLM Providers"
+    base_difficulty: medium
+    decay_rate: fast
+    members: [openai, claude, anthropic, gemini, "google gemini", mistral, cohere,
+              "azure openai"]
+
+  llm_frameworks:
+    label: "LLM / AI Application Frameworks"
+    base_difficulty: medium
+    decay_rate: fast
+    members: [langchain, llamaindex, huggingface, transformers, "semantic kernel",
+              "vector databases", pinecone, weaviate, chromadb, faiss]
+
+  container_orchestration:
+    label: "Container Orchestration"
+    base_difficulty: hard
+    decay_rate: moderate
+    members: [kubernetes, "docker swarm", nomad, openshift]
+
+  containerization:
+    label: "Containerization"
+    base_difficulty: easy
+    decay_rate: slow
+    members: [docker, podman]
+
+  ci_cd_tools:
+    label: "CI/CD Tools"
+    base_difficulty: medium
+    decay_rate: moderate
+    members: [jenkins, "github actions", "gitlab ci", circleci, "travis ci",
+              cicd]
+
+  infrastructure_as_code:
+    label: "Infrastructure as Code"
+    base_difficulty: medium
+    decay_rate: moderate
+    members: [terraform, ansible, pulumi, cloudformation, chef, puppet]
+
+  cs_fundamentals:
+    label: "CS Fundamentals"
+    base_difficulty: hard
+    decay_rate: slow
+    members: ["data structures and algorithms", "distributed systems", networking,
+              "operating systems", "computer architecture", "system design"]
+
+  oop_statically_typed_languages:
+    label: "Statically-Typed OOP Languages"
+    base_difficulty: medium
+    decay_rate: slow
+    members: [java, csharp, kotlin, go, golang, rust]
+
+  dynamic_scripting_languages:
+    label: "Dynamically-Typed Scripting Languages"
+    base_difficulty: easy
+    decay_rate: slow
+    members: [python, ruby, php]
+
+  data_science_libraries:
+    label: "Data Science / Numerical Computing Libraries"
+    base_difficulty: hard
+    decay_rate: moderate
+    members: [pandas, numpy, scikit-learn, scipy, "r language"]
+
+  deep_learning_frameworks:
+    label: "Deep Learning Frameworks"
+    base_difficulty: hard
+    decay_rate: fast
+    members: [tensorflow, pytorch, jax]
+
+  mobile_frameworks:
+    label: "Mobile Frameworks"
+    base_difficulty: medium
+    decay_rate: moderate
+    members: ["react native", flutter, swiftui, "android sdk", xamarin, ionic]
+
+  testing_frameworks:
+    label: "Testing Frameworks"
+    base_difficulty: easy
+    decay_rate: slow
+    members: [pytest, jest, junit, mocha, cypress, selenium, playwright]
+
+  message_queues:
+    label: "Message Queues / Event Streaming"
+    base_difficulty: medium
+    decay_rate: moderate
+    members: [kafka, rabbitmq, sqs, "azure service bus", "google pub/sub"]
+
+  api_query_styles:
+    label: "API Query Styles"
+    base_difficulty: easy
+    decay_rate: slow
+    members: ["rest api", graphql, grpc, soap]
+
+# ---------------------------------------------------------------------------
+# Transferable edges — related but not interchangeable categories. Direction
+# doesn't matter for lookup (treated symmetrically); `strength` maps to a
+# score sub-band (strong -> 60-80%, weak -> 40-60%) in Stage C.
+# ---------------------------------------------------------------------------
+transferable_edges:
+  - {from: containerization, to: container_orchestration, strength: strong}
+  - {from: relational_databases, to: nosql_databases, strength: weak}
+  - {from: dynamic_scripting_languages, to: oop_statically_typed_languages, strength: weak}
+  - {from: llm_providers, to: llm_frameworks, strength: strong}
+  - {from: message_queues, to: container_orchestration, strength: weak}
+  - {from: ci_cd_tools, to: infrastructure_as_code, strength: weak}
+  - {from: infrastructure_as_code, to: container_orchestration, strength: weak}
+  - {from: cs_fundamentals, to: backend_frameworks, strength: weak}
+  - {from: data_science_libraries, to: deep_learning_frameworks, strength: weak}

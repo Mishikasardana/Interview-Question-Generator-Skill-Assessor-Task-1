@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "streamlit-app",
+      "runtimeExecutable": "/Users/namansehwag/Downloads/iip 3/.venv/bin/streamlit",
+      "runtimeArgs": ["run", "/Users/namansehwag/Downloads/iip 3/app.py", "--server.headless", "true"],
+      "port": 8501
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "overall_score": 78,
+  "correctness": 25,
+  "keyword_coverage": 18,
+  "clarity": 16,
+  "communication": 12,
+  "completeness": 7,
+  "strengths": ["Clear structure"],
+  "improvements": ["More examples"],
+  "feedback": "Solid answer overall.",
+  "ideal_answer": "A model answer would cover REST principles and trade-offs."
+}

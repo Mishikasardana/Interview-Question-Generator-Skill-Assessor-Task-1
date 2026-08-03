@@ -1,0 +1,7 @@
+{
+  "recruiter_mean_abs_error": 14.1,
+  "recruiter_pass_rate": 40.0,
+  "_note": "Seeded from a real 5-pair GLM run (excellent_02_backend [timed out, excluded], good_06_genai, moderate_12_backend, weak_17_devops, verypoor_21_backend) against the current, uncalibrated scoring_config.yaml. This is genuine measured data, not fabricated -- but it is a small, unlabeled sample: expected_min/expected_max come from the dataset author's pre-registered estimates (tests/benchmark/dataset.py), NOT from an independent recruiter panel (see the approved 'One Recruiter Match Score' plan, section 7.1/8.2, which is still pending real human-recruiter labeling). Treat this baseline as a placeholder that only guards against gross accidental regressions during development, not as a calibration-validated target. Replace it once a real recruiter-labeled, held-out-validated run completes (plan Phase 7).",
+  "_sample_size": 5,
+  "_seeded_date": "2026-07-30"
+}

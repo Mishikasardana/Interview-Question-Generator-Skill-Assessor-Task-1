@@ -1,0 +1,22 @@
+Jane Doe
+Software Engineer
+Email: jane.doe@email.com | Phone: +1-555-010-1234
+LinkedIn: linkedin.com/in/janedoe | GitHub: github.com/janedoe
+
+SKILLS
+Python, JavaScript, PostgreSQL, Docker, Git
+
+EDUCATION
+B.S. Computer Science, State University, 2022
+
+EXPERIENCE
+Software Engineer Intern, Tech Corp, Summer 2023
+- Built REST APIs with Python and FastAPI
+- Improved query performance for PostgreSQL-backed services
+
+PROJECTS
+Interview Prep Tracker — Full-stack web app using React and Python
+Open Source CLI — Command-line tool for automating git workflows
+
+CERTIFICATIONS
+AWS Cloud Practitioner, 2024
