@@ -40,10 +40,12 @@ import httpx
 
 from jd_parsing.config import get_glm_api_key, get_glm_api_url, get_glm_model
 from jd_parsing.exceptions import JDParsingError
+from glm_http import post_with_retry
 
 _PROMPT_PATH = Path(__file__).parent / "prompts" / "jd_parser_prompt.txt"
-_REQUEST_TIMEOUT_SECONDS = 120.0
+_REQUEST_TIMEOUT_SECONDS = 30.0
 _DEFAULT_TEMPERATURE = 0.1
+_MAX_OUTPUT_TOKENS = 2048
 
 
 def _load_system_prompt() -> str:
@@ -94,6 +96,7 @@ def parse_jd_text(jd_text: str, *, strict: bool = False) -> str:
             {"role": "user", "content": jd_text},
         ],
         "temperature": _DEFAULT_TEMPERATURE,
+        "max_tokens": _MAX_OUTPUT_TOKENS,
     }
     headers = {
         "Authorization": f"Bearer {get_glm_api_key()}",
@@ -101,13 +104,12 @@ def parse_jd_text(jd_text: str, *, strict: bool = False) -> str:
     }
 
     try:
-        response = httpx.post(
+        response = post_with_retry(
             get_glm_api_url(),
             headers=headers,
             json=payload,
             timeout=_REQUEST_TIMEOUT_SECONDS,
         )
-        response.raise_for_status()
     except httpx.HTTPStatusError as exc:
         raise JDParsingError(
             f"GLM API returned HTTP {exc.response.status_code}: "

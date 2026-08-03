@@ -56,6 +56,23 @@ def get_glm_model() -> str:
     return os.getenv("GROQ_MODEL", os.getenv("GLM_MODEL", "llama-3.3-70b-versatile")).strip()
 
 
+def get_recruiter_glm_model() -> str:
+    """
+    Return the chat-completions model for the Recruiter Intelligence pipeline
+    (requirement extraction + evidence evaluation).
+
+    Deliberately a separate env var from ``GROQ_MODEL`` rather than reusing
+    it: Groq's on-demand (free) tier grants each *model* its own independent
+    tokens-per-minute budget. Requirement extraction and evidence evaluation
+    fire two extra GLM calls back-to-back on top of resume/JD parsing — if
+    all four shared one model, they'd all draw from the same TPM bucket and
+    exhaust it faster. Pointing this step at a different model gives it a
+    separate, untouched budget at no extra cost. Falls back to ``GROQ_MODEL``
+    if unset, so an old .env still works without edits.
+    """
+    return os.getenv("RECRUITER_GROQ_MODEL", get_glm_model()).strip()
+
+
 def get_glm_api_url() -> str:
     """Return the chat-completions endpoint URL (defaults to Groq's)."""
     return os.getenv(

@@ -122,7 +122,7 @@ def test_build_evidence_evaluation_prompt_rejects_non_parsed_resume():
 
 @patch("recruiter_intelligence.evidence_evaluation.httpx.post")
 @patch("recruiter_intelligence.evidence_evaluation.get_glm_api_key", return_value="key")
-@patch("recruiter_intelligence.evidence_evaluation.get_glm_model", return_value="glm-4.5-flash")
+@patch("recruiter_intelligence.evidence_evaluation.get_recruiter_glm_model", return_value="glm-4.5-flash")
 @patch("recruiter_intelligence.evidence_evaluation.get_glm_api_url", return_value="https://example/api")
 def test_evaluate_evidence_text_success(_url, _model, _key, mock_post):
     mock_post.return_value = _mock_response(_VALID_LLM_JSON)
@@ -136,7 +136,7 @@ def test_evaluate_evidence_text_success(_url, _model, _key, mock_post):
 
 @patch("recruiter_intelligence.evidence_evaluation.httpx.post")
 @patch("recruiter_intelligence.evidence_evaluation.get_glm_api_key", return_value="key")
-@patch("recruiter_intelligence.evidence_evaluation.get_glm_model", return_value="glm-4.5-flash")
+@patch("recruiter_intelligence.evidence_evaluation.get_recruiter_glm_model", return_value="glm-4.5-flash")
 @patch("recruiter_intelligence.evidence_evaluation.get_glm_api_url", return_value="https://example/api")
 def test_evaluate_evidence_text_raises_on_http_error(_url, _model, _key, mock_post):
     request = httpx.Request("POST", "https://example/api")
@@ -149,7 +149,7 @@ def test_evaluate_evidence_text_raises_on_http_error(_url, _model, _key, mock_po
 
 @patch("recruiter_intelligence.evidence_evaluation.httpx.post")
 @patch("recruiter_intelligence.evidence_evaluation.get_glm_api_key", return_value="key")
-@patch("recruiter_intelligence.evidence_evaluation.get_glm_model", return_value="glm-4.5-flash")
+@patch("recruiter_intelligence.evidence_evaluation.get_recruiter_glm_model", return_value="glm-4.5-flash")
 @patch("recruiter_intelligence.evidence_evaluation.get_glm_api_url", return_value="https://example/api")
 def test_evaluate_evidence_text_strict_mode_appends_instruction(_url, _model, _key, mock_post):
     mock_post.return_value = _mock_response(_VALID_LLM_JSON)
@@ -261,7 +261,7 @@ def test_resolve_requirement_scores_fills_default_for_id_the_model_dropped():
 
 @patch("recruiter_intelligence.evidence_evaluation.httpx.post")
 @patch("recruiter_intelligence.evidence_evaluation.get_glm_api_key", return_value="key")
-@patch("recruiter_intelligence.evidence_evaluation.get_glm_model", return_value="glm-4.5-flash")
+@patch("recruiter_intelligence.evidence_evaluation.get_recruiter_glm_model", return_value="glm-4.5-flash")
 @patch("recruiter_intelligence.evidence_evaluation.get_glm_api_url", return_value="https://example/api")
 def test_evaluate_evidence_end_to_end(_url, _model, _key, mock_post):
     mock_post.return_value = _mock_response(_VALID_LLM_JSON)

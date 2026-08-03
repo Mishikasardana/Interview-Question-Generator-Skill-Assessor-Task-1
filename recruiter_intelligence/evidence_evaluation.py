@@ -41,11 +41,13 @@ from recruiter_intelligence.exceptions import (
 from recruiter_intelligence.schema import RequirementScore, StageAResult, StageCResult
 from recruiter_intelligence.skill_ontology import load_ontology
 from resume_processing.schema import ParsedResume
-from semantic_matching.config import get_glm_api_key, get_glm_api_url, get_glm_model
+from semantic_matching.config import get_glm_api_key, get_glm_api_url, get_recruiter_glm_model
+from glm_http import post_with_retry
 
 _PROMPT_PATH = Path(__file__).parent / "prompts" / "evidence_evaluation_prompt.txt"
-_REQUEST_TIMEOUT_SECONDS = 120.0
+_REQUEST_TIMEOUT_SECONDS = 30.0
 _DEFAULT_TEMPERATURE = 0.1
+_MAX_OUTPUT_TOKENS = 4096
 _MAX_ATTEMPTS = 2
 _MARKDOWN_FENCE_PATTERN = re.compile(
     r"^```(?:json)?\s*\n?(.*?)\n?```\s*$", re.DOTALL | re.IGNORECASE,
@@ -136,12 +138,13 @@ def evaluate_evidence_text(stage_a: StageAResult, resume: ParsedResume, *, stric
         )
 
     payload = {
-        "model": get_glm_model(),
+        "model": get_recruiter_glm_model(),
         "messages": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
         ],
         "temperature": _DEFAULT_TEMPERATURE,
+        "max_tokens": _MAX_OUTPUT_TOKENS,
     }
     headers = {
         "Authorization": f"Bearer {get_glm_api_key()}",
@@ -149,10 +152,9 @@ def evaluate_evidence_text(stage_a: StageAResult, resume: ParsedResume, *, stric
     }
 
     try:
-        response = httpx.post(
+        response = post_with_retry(
             get_glm_api_url(), headers=headers, json=payload, timeout=_REQUEST_TIMEOUT_SECONDS,
         )
-        response.raise_for_status()
     except httpx.HTTPStatusError as exc:
         raise GLMEvidenceEvaluationError(
             f"GLM API returned HTTP {exc.response.status_code}: {exc.response.text}"
