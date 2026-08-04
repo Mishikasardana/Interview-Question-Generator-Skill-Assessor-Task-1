@@ -14,7 +14,7 @@ dashboard — with PostgreSQL persistence throughout.
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env              # add GLM_API_KEY at minimum
+cp .env.example .env              # add GROQ_API_KEY at minimum
 streamlit run app.py
 ```
 
