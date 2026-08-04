@@ -1,9 +1,12 @@
 # Interview Intelligence Platform
 
+**🔗 Live demo:** [interview-question-generator-skill-asseappr-task-1-ikw9yjgpvyw.streamlit.app](https://interview-question-generator-skill-asseappr-task-1-ikw9yjgpvyw.streamlit.app/) — deployed on Streamlit Community Cloud.
+
 An AI-powered interview preparation and candidate evaluation platform.
 Upload a resume (PDF or DOCX) and a job description, get a skill-match
 score, generate personalized interview questions, answer them by voice or
-text, and get AI-scored feedback — with PostgreSQL persistence throughout.
+text, get AI-scored feedback, and track progress over time on an analytics
+dashboard — with PostgreSQL persistence throughout.
 
 ## Run the full app
 
@@ -15,17 +18,18 @@ cp .env.example .env              # add GLM_API_KEY at minimum
 streamlit run app.py
 ```
 
-Opens at `http://localhost:8501`. **`DATABASE_URL` is required to sign
-in** — accounts have to live somewhere, so this is the one place that isn't
-best-effort. Everything else (`GOOGLE_SPEECH_API_KEY`, and DB writes for
-resumes/JDs/questions/answers/reports once you're logged in) stays optional
-and degrades gracefully. The sidebar shows a live "Database connected" /
-"Database not configured" indicator.
+Opens at `http://localhost:8501`. **`DATABASE_URL` is required to log in or
+sign up** — accounts have to live somewhere, so this is the one place that
+isn't best-effort. Everything else (`GOOGLE_SPEECH_API_KEY`, and DB writes
+for resumes/JDs/questions/answers/reports once you're logged in) stays
+optional and degrades gracefully. The sidebar shows a live "Database
+connected" / "Database not configured" indicator.
 
-Flow: Home → pick Student or Recruiter → **Continue with Google** (scoped to
-that role) → land straight on that dashboard. A Profile page (name, email,
-phone, account type, Log Out) is available from the sidebar once logged in.
-Sign-in is Google-only — there's no email/password/signup form.
+Flow: Home → pick Student or Recruiter → log in or sign up (scoped to that
+role) → land straight on that dashboard. From the sidebar you can also open
+**Analytics** (score trends, category breakdowns, and skill-gap charts built
+from your own history) and a Settings page (name, email, phone, account
+type, Log Out).
 
 To set up PostgreSQL:
 
@@ -34,46 +38,40 @@ To set up PostgreSQL:
 python -m database.init_db
 ```
 
-### Google Sign-In setup
-
-Sign-in uses Streamlit's native OIDC support (`st.login()`/`st.user`), not a
-custom auth backend. To enable it:
-
-1. In [Google Cloud Console](https://console.cloud.google.com/) → **APIs &
-   Services → Credentials**, create an **OAuth client ID** of type
-   **Web application**, with an authorized redirect URI of
-   `http://localhost:8501/oauth2callback` (add your production URL's
-   `/oauth2callback` too before deploying).
-2. Create `.streamlit/secrets.toml` (already gitignored — never commit it)
-   with the client ID/secret pasted into **two** provider blocks sharing the
-   same real Google client:
-
-   ```toml
-   [auth]
-   redirect_uri = "http://localhost:8501/oauth2callback"
-   cookie_secret = "<random — e.g. `python -c \"import secrets; print(secrets.token_hex(32))\"`>"
-
-   [auth.student]
-   client_id = "<GOOGLE_CLIENT_ID>.apps.googleusercontent.com"
-   client_secret = "<GOOGLE_CLIENT_SECRET>"
-   server_metadata_url = "https://accounts.google.com/.well-known/openid-configuration"
-
-   [auth.recruiter]
-   client_id = "<SAME_GOOGLE_CLIENT_ID>.apps.googleusercontent.com"
-   client_secret = "<SAME_GOOGLE_CLIENT_SECRET>"
-   server_metadata_url = "https://accounts.google.com/.well-known/openid-configuration"
-   ```
-
-   Two provider names sharing one real client is what lets the app recover
-   which portal (student/recruiter) the user picked before authenticating —
-   `st.session_state` doesn't survive the Google redirect round-trip, but
-   the provider name does, via `st.user["provider"]`.
-
-Without this file, the app shows a friendly "Google sign-in isn't configured
-yet" message instead of a button — nothing crashes.
-
 The standalone REST API (`api/`, `python main.py`) is also still available
 for other integrations — see "Running the API" below.
+
+## Deployment
+
+The app is deployed on **Streamlit Community Cloud**:
+**https://interview-question-generator-skill-asseappr-task-1-ikw9yjgpvyw.streamlit.app/**
+
+To deploy your own copy the same way:
+
+1. Push this repo to GitHub (make sure `.env` is **not** committed —
+   `.gitignore` already excludes it).
+2. On [share.streamlit.io](https://share.streamlit.io), create a new app
+   pointing at your repo, branch, and `app.py` as the entry point.
+3. Under the app's **Settings → Secrets**, paste the same key/value pairs
+   from `.env.example` (filled in with your real values) — Streamlit Cloud
+   reads secrets as environment variables, so no code changes are needed:
+   ```toml
+   GLM_API_KEY = "your_api_key_here"
+   GLM_MODEL = "glm-4.5-flash"
+   GLM_API_URL = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
+   DATABASE_URL = "postgresql+psycopg://user:password@host:5432/dbname"
+   GOOGLE_SPEECH_API_KEY = ""
+   ALLOWED_ORIGINS = "*"
+   ```
+4. Point `DATABASE_URL` at a hosted PostgreSQL instance (e.g. Neon, Supabase,
+   Render, Railway) — Streamlit Cloud has no persistent local disk, so
+   login/signup and history need a real external database.
+5. Deploy. On first boot, run `python -m database.init_db` once (locally,
+   pointed at the same `DATABASE_URL`) to create the schema.
+
+The `api/` FastAPI service is a separate process and isn't part of this
+Streamlit Cloud deployment — deploy it independently (Render, Railway, Fly.io,
+etc.) if you need the REST endpoints publicly reachable too.
 
 ## Modules
 
@@ -85,8 +83,11 @@ for other integrations — see "Running the API" below.
 6. **Speech-to-Text** — recorded voice answer → transcribed text
 7. **Database** — PostgreSQL persistence for every stage above
 8. **API** — FastAPI routes wiring the first five modules together
-9. **App** (`app.py`) — the Streamlit frontend, wired to every module above
-   directly (in-process) plus the database layer
+9. **Analytics Dashboard** — aggregates each user's own persisted history
+   (reports, evaluations, match results) into score trends, per-category
+   breakdowns, and skill-gap charts, rendered with Plotly inside `app.py`
+10. **App** (`app.py`) — the Streamlit frontend, wired to every module above
+    directly (in-process) plus the database layer
 
 `app.py` is the full end-to-end application. `api/` is a second,
 independent REST entry point over the same shared business-logic modules
@@ -262,9 +263,13 @@ answer evaluation):
 
 ```text
 GLM_API_KEY=your_api_key_here
-GLM_MODEL=glm-4.5-flash
+GLM_MODEL=glm-4-flash
 GLM_API_URL=https://open.bigmodel.cn/api/paas/v4/chat/completions
 ```
+
+`requirements.txt` also includes `plotly` and `pandas`, used only by the
+Analytics dashboard in `app.py` for the charts and score aggregation — no
+extra setup needed, they install with everything else above.
 
 ## Running Tests
 
