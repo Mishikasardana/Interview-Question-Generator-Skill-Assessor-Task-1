@@ -56,9 +56,9 @@ To deploy your own copy the same way:
    from `.env.example` (filled in with your real values) — Streamlit Cloud
    reads secrets as environment variables, so no code changes are needed:
    ```toml
-   GLM_API_KEY = "your_api_key_here"
-   GLM_MODEL = "glm-4.5-flash"
-   GLM_API_URL = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
+   GROQ_API_KEY = "your_api_key_here"
+   GROQ_MODEL = "llama-3.1-8b-instant"
+   GROQ_API_URL = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
    DATABASE_URL = "postgresql+psycopg://user:password@host:5432/dbname"
    GOOGLE_SPEECH_API_KEY = ""
    ALLOWED_ORIGINS = "*"
